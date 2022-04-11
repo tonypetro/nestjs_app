@@ -1,0 +1,45 @@
+version: '3.3'
+
+volumes:
+  db_data_dev: # mount it internally instead of a folder. it avoids file lock problems
+  
+services:
+  db-dev:
+    container_name: db_kesh_dev
+    image: postgres:14.1
+    volumes:
+      - db_data_dev:/var/lib/postgres
+    restart: always
+    ports:
+      - '54320:5432'
+    environment:
+      POSTGRES_USER: kesh
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: kesh_db_dev
+
+  db-test:
+    container_name: db_kesh_test
+    image: postgres:14.1
+    restart: always
+    ports:
+      - '54321:5432'
+    environment:
+      POSTGRES_USER: kesh
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: kesh_db_test
+
+  app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: node-backend-app
+    depends_on:
+      - db-dev
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/app
+    environment:
+      - DB_HOST=db-dev
+    ports:
+      - 5000:5000
